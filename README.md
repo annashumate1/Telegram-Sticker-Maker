@@ -70,10 +70,6 @@ Telegram's Bot API rejects video stickers over 256 KB. If you raise *Max size* (
 - Settings, including the bot token, are stored as plain text. On Linux they're in `~/.config/stickerforge/stickerforge.conf`; on Windows, in the registry under `HKEY_CURRENT_USER\Software\stickerforge`.
 - The face-detection model (230 KB) is downloaded once into `~/.cache/stickerforge` (Windows: `%USERPROFILE%\.cache\stickerforge`).
 
-## Credits
-
-Screenshots use footage from *Tears of Steel*, (c) Blender Foundation | [mango.blender.org](https://mango.blender.org), licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
-
 ## License
 
 Distributed under the GNU General Public License, version 3. See [LICENSE](LICENSE).
