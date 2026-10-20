@@ -468,7 +468,7 @@ class Main(QMainWindow):
                 self.grid.addItem(it)
         self.log(f"Found {len(found)} videos → {len(self.clips)} stickers")
         for i, c in enumerate(self.clips):
-            self.pool.start(lambda i=i, c=c, g=gen: self.load_thumb(g, i, c))
+            self.pool.start(lambda i=i, c=c, g=gen: self.load_thumb(g, i, c), 1)  # priority: ahead of renders
         self.refresh_items()
         if self.clips:
             self.grid.setCurrentRow(0)
@@ -680,7 +680,7 @@ class Main(QMainWindow):
         if c.status == "done" and self.out_path(c).exists():
             self.preview.setText("loading…")
             gen, out = self.gen, self.out_path(c)
-            self.pool.start(lambda: self.bus.preview.emit(gen, i, [to_qimage(f) for f in eng.decode_preview(out, 300)]))
+            self.pool.start(lambda: self.bus.preview.emit(gen, i, [to_qimage(f) for f in eng.decode_preview(out, 300)]), 2)
             self.anim_fps = o.fps
         else:
             self.preview.setPixmap(QPixmap())
