@@ -2,6 +2,10 @@
 
 **Sticker Forge**: a desktop app that turns a folder of videos into Telegram video sticker packs, mostly automatically.
 
+![Stickers made by the app](docs/stickers.gif)
+
+![Main window](docs/screenshot-main.png)
+
 Works on **Windows** and **Linux**. It needs two things installed, [uv](https://docs.astral.sh/uv/) and ffmpeg. uv fetches Python and the app's libraries (PySide6, OpenCV, numpy, requests) on first launch, which is about 150 MB once.
 
 ## Windows
@@ -54,6 +58,8 @@ uv run sticker_engine.py --selftest       # quick check that ffmpeg and the pipe
 - Optional extras: rounded or circle shape (transparent corners), ping-pong loop, several moments per long video.
 - Per-sticker overrides: start, speed, focus, zoom, shape and emoji. Work is saved in `stickers/.stickerforge.json`, so reopening a folder doesn't re-render.
 
+![Rendering in progress, with ETA and live preview](docs/screenshot-rendering.png)
+
 **Convenience:** the app reopens your last folder on launch, and there's an option to include subfolders. You get a Stop button, an ETA for rendering and uploading, and Select all / none. Double-click a card to play it; right-click for re-render, open sticker or source, or show the folder. Cards marked as uploaded are already in your pack.
 
 **Telegram pack:** create a bot with @BotFather, get your numeric ID from @userinfobot, send `/start` to your bot, fill in the Telegram box, then click **Make Pack**.
@@ -63,6 +69,10 @@ Telegram's Bot API rejects video stickers over 256 KB. If you raise *Max size* (
 - Rendered stickers go into a `stickers` folder inside your video folder.
 - Settings, including the bot token, are stored as plain text. On Linux they're in `~/.config/stickerforge/stickerforge.conf`; on Windows, in the registry under `HKEY_CURRENT_USER\Software\stickerforge`.
 - The face-detection model (230 KB) is downloaded once into `~/.cache/stickerforge` (Windows: `%USERPROFILE%\.cache\stickerforge`).
+
+## Credits
+
+Screenshots use footage from *Tears of Steel*, (c) Blender Foundation | [mango.blender.org](https://mango.blender.org), licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 
 ## License
 
