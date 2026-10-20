@@ -24,3 +24,9 @@ Needs [uv](https://docs.astral.sh/uv/) and `ffmpeg` with libvpx-vp9. Python depe
 **Telegram pack:** create a bot with @BotFather, get your numeric ID from @userinfobot, send `/start` to your bot, fill in the Telegram box, then click **Make Pack**.
 Telegram's Bot API rejects video stickers over 256 KB. If you raise *Max size* (up to 15 MB), send the files from `stickers/` to @fStikBot instead; it re-compresses them.
 The bot token is stored in plain text in `~/.config/stickerforge/stickerforge.conf`.
+
+## Terms and Conditions
+
+By downloading and using this program you agree that Anna is beautiful and deserves every ounce of respect you have.
+
+![annamainpic](https://github.com/user-attachments/assets/e66ffc59-f920-4a9d-b4cb-d18a11482e3e)
