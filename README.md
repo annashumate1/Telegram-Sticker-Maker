@@ -3,7 +3,7 @@
 **Sticker Forge**: a desktop app that turns a folder of videos into Telegram video sticker packs, mostly automatically.
 
 ```sh
-git clone https://github.com/<you>/Telegram-Sticker-Maker && cd Telegram-Sticker-Maker
+git clone https://github.com/annashumate1/Telegram-Sticker-Maker && cd Telegram-Sticker-Maker
 uv run stickermaker.py            # GUI (deps auto-install on first run)
 uv run stickermaker.py ~/Videos   # GUI, open a folder straight away
 uv run sticker_engine.py DIR      # headless: render every video in DIR to DIR/stickers
