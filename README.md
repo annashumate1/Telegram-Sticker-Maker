@@ -2,9 +2,9 @@
 
 **Sticker Forge**: a desktop app that turns a folder of videos into Telegram video sticker packs, mostly automatically.
 
-![Stickers made by the app](docs/stickers.gif)
+![Stickers made by the app](docs/sticker-preview.gif)
 
-![Main window](docs/screenshot-main.png)
+![Main window](docs/app-main.png)
 
 Works on **Windows** and **Linux**. It needs two things installed, [uv](https://docs.astral.sh/uv/) and ffmpeg. uv fetches Python and the app's libraries (PySide6, OpenCV, numpy, requests) on first launch, which is about 150 MB once.
 
@@ -58,7 +58,7 @@ uv run sticker_engine.py --selftest       # quick check that ffmpeg and the pipe
 - Optional extras: rounded or circle shape (transparent corners), ping-pong loop, several moments per long video.
 - Per-sticker overrides: start, speed, focus, zoom, shape and emoji. Work is saved in `stickers/.stickerforge.json`, so reopening a folder doesn't re-render.
 
-![Rendering in progress, with ETA and live preview](docs/screenshot-rendering.png)
+![Rendering in progress, with ETA and live preview](docs/app-rendering.png)
 
 **Convenience:** the app reopens your last folder on launch, and there's an option to include subfolders. You get a Stop button, an ETA for rendering and uploading, and Select all / none. Double-click a card to play it; right-click for re-render, open sticker or source, or show the folder. Cards marked as uploaded are already in your pack.
 
