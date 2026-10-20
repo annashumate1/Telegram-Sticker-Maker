@@ -9,6 +9,7 @@ Run:  uv run stickermaker.py [folder]
 import json
 import os
 import re
+import shutil
 import sys
 import time
 from dataclasses import asdict, dataclass, field, replace
@@ -17,12 +18,12 @@ from pathlib import Path
 try:
     import cv2, numpy, requests, PySide6  # noqa: E401,F401
 except ImportError:  # plain `python stickermaker.py`: re-launch through uv, which installs the deps in the header
-    import shutil
     if os.environ.get("STICKERFORGE_UV") or not shutil.which("uv"):
         sys.exit("Missing dependencies. Run:  uv run stickermaker.py\n"
                  "or:  pip install PySide6 'opencv-python-headless<5' numpy requests")
     os.environ["STICKERFORGE_UV"] = "1"
-    os.execvp("uv", ["uv", "run", __file__, *sys.argv[1:]])
+    import subprocess  # not os.execvp: on Windows it doesn't replace the process cleanly
+    sys.exit(subprocess.call(["uv", "run", __file__, *sys.argv[1:]]))
 
 from PySide6.QtCore import QByteArray, QObject, QSettings, QSize, Qt, QThreadPool, QTimer, QUrl, Signal
 from PySide6.QtGui import QColor, QDesktopServices, QIcon, QImage, QPainter, QPixmap
@@ -453,7 +454,7 @@ class Main(QMainWindow):
         meta = self.load_meta()
         for v, n in found:
             for s in range(n):
-                c = Clip(v, s, label=str(v.relative_to(self.folder).with_suffix("")))
+                c = Clip(v, s, label=v.relative_to(self.folder).with_suffix("").as_posix())
                 m = meta.get(c.name)
                 if m:  # restore earlier session's work for this folder
                     c.over, c.emoji, c.uploaded = m.get("over", {}), m.get("emoji", ""), m.get("uploaded", "")
@@ -734,7 +735,7 @@ class Main(QMainWindow):
 
     def load_meta(self):
         try:
-            return json.loads(self.meta_file().read_text())
+            return json.loads(self.meta_file().read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return {}
 
@@ -745,7 +746,7 @@ class Main(QMainWindow):
                          "skip": self.grid.item(i).checkState() != Qt.Checked}
                 for i, c in enumerate(self.clips)}
         try:
-            self.meta_file().write_text(json.dumps(data, indent=1))
+            self.meta_file().write_text(json.dumps(data, indent=1), encoding="utf-8")
         except OSError:
             pass
 
@@ -866,6 +867,12 @@ if __name__ == "__main__":
     app.setStyleSheet(QSS)
     w = Main()
     w.show()
+    if not (shutil.which("ffmpeg") and shutil.which("ffprobe")):
+        QMessageBox.critical(w, "ffmpeg not found", (
+            "Sticker Forge needs ffmpeg and ffprobe on your PATH.\n\n"
+            "Windows:  winget install Gyan.FFmpeg   (then restart the app)\n"
+            "Arch:  sudo pacman -S ffmpeg\nUbuntu/Debian:  sudo apt install ffmpeg"))
+        sys.exit(1)
     last = w.settings.value("last_folder")
     if len(sys.argv) > 1 and Path(sys.argv[1]).is_dir():
         w.open_folder(Path(sys.argv[1]).resolve())

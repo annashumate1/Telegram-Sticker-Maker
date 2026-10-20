@@ -14,6 +14,7 @@ CLI:  python sticker_engine.py DIR            render every video in DIR to DIR/s
       python sticker_engine.py --selftest     synthetic end-to-end check
 """
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -37,6 +38,8 @@ CUT = 0.18                  # ponytail: mean abs-diff above this = scene cut; tu
 STATIC, FRANTIC = 0.008, 0.07  # ponytail: auto-speed calibration (typical motion per 1/4 s); speed up below, slow-mo above
 YUNET_URL = "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
 CACHE = Path.home() / ".cache" / "stickerforge"
+# Windows: don't pop a console window for every ffmpeg call when the GUI runs
+NO_WINDOW = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
 
 
 @dataclass
@@ -60,7 +63,8 @@ def probe(path):
     out = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
          "stream=width,height:stream_tags=rotate:stream_side_data=rotation:format=duration",
-         "-of", "json", str(path)], capture_output=True, text=True, check=True).stdout
+         "-of", "json", str(path)], capture_output=True, text=True, encoding="utf-8", errors="replace",
+        check=True, **NO_WINDOW).stdout
     j = json.loads(out)
     if not j.get("streams"):
         raise ValueError("no video stream")
@@ -94,7 +98,7 @@ def read_frames(path, w, h, start=0.0, length=None, fps=None, speed=1.0):
     if length:
         cmd += ["-t", f"{length:.3f}"]
     cmd += ["-i", str(path), "-an", "-vf", ",".join(vf), "-f", "rawvideo", "-pix_fmt", "bgr24", "-"]
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, **NO_WINDOW)
     n = w * h * 3
     try:
         while len(buf := p.stdout.read(n)) == n:
@@ -114,7 +118,7 @@ def decode_preview(path, size=256):
     """Decode a rendered sticker (keeping alpha) -> list of BGRA frames."""
     cmd = ["ffmpeg", "-v", "error", "-nostdin", "-c:v", "libvpx-vp9", "-i", str(path),
            "-vf", f"scale={size}:{size}", "-f", "rawvideo", "-pix_fmt", "bgra", "-"]
-    raw = subprocess.run(cmd, capture_output=True, check=True).stdout
+    raw = subprocess.run(cmd, capture_output=True, check=True, **NO_WINDOW).stdout
     return list(np.frombuffer(raw, np.uint8).reshape(-1, size, size, 4))
 
 
@@ -302,7 +306,9 @@ def encode(frames, out, fps, max_kb, alpha):
                "-pix_fmt", "yuva420p" if alpha else "yuv420p",
                "-crf", "30", "-b:v", f"{int(kbps)}k", "-deadline", "good", "-cpu-used", "2", "-row-mt", "1",
                str(out)]
-        subprocess.run(cmd, input=data, check=True, capture_output=True)
+        r = subprocess.run(cmd, input=data, capture_output=True, **NO_WINDOW)
+        if r.returncode:
+            raise RuntimeError("ffmpeg: " + r.stderr.decode("utf-8", "replace").strip()[-300:])
         kb = out.stat().st_size / 1024
         if kb <= max_kb:
             return kb
@@ -500,13 +506,15 @@ def _test_publish():
         return True
     real, Telegram.call = Telegram.call, fake
     try:
-        with tempfile.NamedTemporaryFile(suffix=".webm") as f:
+        with tempfile.TemporaryDirectory() as d:  # not NamedTemporaryFile: Windows can't reopen it
+            f = Path(d) / "s.webm"
+            f.write_bytes(b"x")
             added = []
-            urls = publish("t", "1", "pk", "Pk", [(f.name, "🙂")] * 255, log=lambda m: None, on_added=added.append)
+            urls = publish("t", "1", "pk", "Pk", [(f, "🙂")] * 255, log=lambda m: None, on_added=added.append)
             assert sets == {"pk_by_bot": 120, "pk_2_by_bot": 120, "pk_3_by_bot": 115}, sets
             assert len(urls) == 3 and len(added) == 255
             assert sent == ["pk_by_bot", "pk_2_by_bot", "pk_3_by_bot"], sent
-            publish("t", "1", "pk", "Pk", [(f.name, "🙂")] * 10, replace=True, log=lambda m: None)
+            publish("t", "1", "pk", "Pk", [(f, "🙂")] * 10, replace=True, log=lambda m: None)
             assert sets == {"pk_by_bot": 10}, sets
     finally:
         Telegram.call = real
@@ -516,7 +524,7 @@ def _selftest():
     with tempfile.TemporaryDirectory() as d:
         src = Path(d) / "src.mp4"
         subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=1280x720:rate=30:duration=8",
-                        "-pix_fmt", "yuv420p", str(src)], check=True)
+                        "-pix_fmt", "yuv420p", str(src)], check=True, **NO_WINDOW)
         for o in (Opts(), Opts(shape="circle", boomerang=True, speed=1.5, max_kb=120)):
             out = Path(d) / "out.webm"
             res = render(src, out, o)
